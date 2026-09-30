@@ -1,80 +1,190 @@
-/* Calendar-Notes-Discord UI Styles */
+/* Calendar-Notes-Discord - Modern Dark Theme & Mobile-First Styling */
 :root {
   --primary: #3b82f6;
   --primary-hover: #2563eb;
-  --bg-dark: #0f172a;
-  --card-dark: #1e293b;
-  --border-dark: #334155;
+  --bg-dark: #090d16;
+  --surface-1: #0f172a;
+  --surface-2: #1e293b;
+  --surface-3: #334155;
+  --border-subtle: rgba(148, 163, 184, 0.12);
+  --border-strong: rgba(148, 163, 184, 0.25);
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
 }
 
-/* Smooth mobile scrolling & tap highlight removal */
+/* Base reset & mobile touch feel */
 html, body {
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: none;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--bg-dark);
+  color: var(--text-main);
 }
 
 /* Custom scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
   background: #334155;
-  border-radius: 4px;
+  border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #475569;
 }
 
-/* Calendar Month Grid */
+/* Calendar Grid */
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 2px;
+  gap: 3px;
 }
 
 .calendar-day-cell {
   aspect-ratio: 1 / 1;
-  min-height: 48px;
-  transition: all 0.15s ease;
+  min-height: 44px;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @media (min-width: 768px) {
   .calendar-day-cell {
     aspect-ratio: auto;
-    min-height: 90px;
+    min-height: 84px;
   }
 }
 
-/* Modal transitions */
-.modal-backdrop {
-  background-color: rgba(15, 23, 42, 0.75);
-  backdrop-filter: blur(4px);
+/* Hour Timeline View for Calendar Day View */
+.timeline-hour-slot {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  min-height: 52px;
+  border-top: 1px solid rgba(148, 163, 184, 0.1);
+  position: relative;
 }
 
-/* Mobile safe areas (notch / bottom home bar) */
+.timeline-hour-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  padding-top: 4px;
+  text-align: right;
+  padding-right: 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.timeline-hour-content {
+  position: relative;
+  min-height: 48px;
+  padding: 4px 6px;
+}
+
+/* Unified Rich Text Editor Styling (Apple Notes / Notion feel) */
+.rich-editor-canvas {
+  min-height: 240px;
+  outline: none;
+  line-height: 1.65;
+  color: #e2e8f0;
+  font-size: 14px;
+}
+
+.rich-editor-canvas:empty:before {
+  content: attr(placeholder);
+  color: #475569;
+  cursor: text;
+}
+
+.rich-editor-canvas h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #f8fafc;
+  margin-top: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.rich-editor-canvas h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  margin-top: 0.6rem;
+  margin-bottom: 0.4rem;
+}
+
+.rich-editor-canvas p {
+  margin-bottom: 0.6rem;
+}
+
+.rich-editor-canvas ul {
+  list-style-type: disc;
+  padding-left: 1.4rem;
+  margin-bottom: 0.6rem;
+}
+
+.rich-editor-canvas ol {
+  list-style-type: decimal;
+  padding-left: 1.4rem;
+  margin-bottom: 0.6rem;
+}
+
+.rich-editor-canvas blockquote {
+  border-left: 3px solid #3b82f6;
+  padding-left: 12px;
+  color: #94a3b8;
+  font-style: italic;
+  margin: 0.5rem 0;
+}
+
+/* Interactive Checklist Items */
+.task-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 6px;
+  user-select: text;
+}
+
+.task-checkbox {
+  width: 16px;
+  height: 16px;
+  margin-top: 3px;
+  border-radius: 4px;
+  accent-color: #3b82f6;
+  cursor: pointer;
+}
+
+.task-text {
+  flex: 1;
+}
+
+.task-checked .task-text {
+  text-decoration: line-through;
+  color: #64748b;
+}
+
+/* Modal animation & backdrop */
+.modal-backdrop {
+  background-color: rgba(5, 8, 15, 0.82);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Safe areas */
 .pb-safe {
-  padding-bottom: env(safe-area-inset-bottom, 16px);
+  padding-bottom: max(16px, env(safe-area-inset-bottom, 16px));
 }
 .pt-safe {
-  padding-top: env(safe-area-inset-top, 16px);
+  padding-top: max(12px, env(safe-area-inset-top, 12px));
 }
 
-/* Markdown preview typography */
-.markdown-body h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; color: #f8fafc; }
-.markdown-body h2 { font-size: 1.25rem; font-weight: 600; margin-top: 1rem; margin-bottom: 0.5rem; color: #f1f5f9; }
-.markdown-body h3 { font-size: 1.1rem; font-weight: 600; margin-top: 0.75rem; margin-bottom: 0.25rem; color: #e2e8f0; }
-.markdown-body p { margin-bottom: 0.75rem; line-height: 1.6; color: #cbd5e1; }
-.markdown-body ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 0.75rem; color: #cbd5e1; }
-.markdown-body ol { list-style-type: decimal; padding-left: 1.5rem; margin-bottom: 0.75rem; color: #cbd5e1; }
-.markdown-body code { background: #334155; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; font-family: monospace; }
-.markdown-body pre { background: #0b1120; padding: 12px; border-radius: 8px; overflow-x: auto; margin-bottom: 0.75rem; }
-.markdown-body pre code { background: transparent; padding: 0; }
-.markdown-body blockquote { border-left: 3px solid #3b82f6; padding-left: 12px; color: #94a3b8; font-style: italic; margin-bottom: 0.75rem; }
-.markdown-body input[type="checkbox"] { margin-right: 0.5rem; accent-color: #3b82f6; }
+/* Discord preview authentic card */
+.discord-card-border {
+  border-left: 4px solid #5865f2;
+}
+
+/* Subtle card glows */
+.card-glow-blue:hover {
+  box-shadow: 0 0 24px -6px rgba(59, 130, 246, 0.25);
+}

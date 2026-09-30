@@ -7,7 +7,7 @@
 
   <!-- PWA & Mobile Meta -->
   <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#0f172a">
+  <meta name="theme-color" content="#090d16">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="CalNotes">
@@ -21,10 +21,9 @@
         extend: {
           colors: {
             brand: {
-              50: '#eff6ff',
               500: '#3b82f6',
               600: '#2563eb',
-              700: '#1d4ed8',
+              700: '#1d4ed8'
             }
           }
         }
@@ -32,40 +31,39 @@
     }
   </script>
 
-  <!-- Lucide Icons & Marked (Markdown Parser) CDN -->
+  <!-- Lucide Icons CDN -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
   <!-- App Stylesheet -->
   <link rel="stylesheet" href="/css/app.css">
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-blue-500 selection:text-white">
+<body class="bg-[#090d16] text-slate-100 min-h-screen flex flex-col antialiased selection:bg-blue-500 selection:text-white">
 
   <!-- TOP HEADER -->
-  <header class="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-md border-b border-slate-800/80 px-4 py-3 pt-safe">
+  <header class="sticky top-0 z-30 bg-[#0f172a]/90 backdrop-blur-xl border-b border-slate-800/80 px-4 py-3 pt-safe">
     <div class="max-w-5xl mx-auto flex items-center justify-between">
-      <div class="flex items-center gap-2.5">
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-blue-500/25">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-500 flex items-center justify-center shadow-lg shadow-blue-500/25">
           <i data-lucide="calendar" class="w-5 h-5 text-white"></i>
         </div>
         <div>
-          <h1 class="text-sm font-bold tracking-tight text-white flex items-center gap-1.5">
+          <h1 class="text-sm font-bold tracking-tight text-white flex items-center gap-2">
             Calendar & Notes
-            <span class="text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">Local</span>
+            <span id="stat-events-count" class="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">0 today</span>
           </h1>
-          <p class="text-[11px] text-slate-400 font-medium">Discord-connected</p>
+          <p class="text-[11px] text-slate-400 font-medium">Self-hosted • Discord alerts</p>
         </div>
       </div>
 
       <!-- Quick Action Buttons -->
       <div class="flex items-center gap-2">
-        <button id="btn-open-new-event" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-600/20 active:scale-95 transition">
+        <button id="btn-open-new-event" class="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-xl bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-600/25 active:scale-95 transition">
           <i data-lucide="plus" class="w-4 h-4"></i>
-          <span class="hidden sm:inline">Event</span>
+          <span>Event</span>
         </button>
-        <button id="btn-open-new-note" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 active:scale-95 transition">
-          <i data-lucide="file-plus" class="w-4 h-4"></i>
-          <span class="hidden sm:inline">Note</span>
+        <button id="btn-open-new-note" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/80 active:scale-95 transition">
+          <i data-lucide="file-plus" class="w-4 h-4 text-blue-400"></i>
+          <span>Note</span>
         </button>
       </div>
     </div>
@@ -80,10 +78,10 @@
       <div class="flex items-center justify-between bg-slate-900/60 p-4 rounded-2xl border border-slate-800/80 shadow-sm">
         <div>
           <h2 id="calendar-month-title" class="text-lg md:text-xl font-bold text-white tracking-tight">Month Year</h2>
-          <p class="text-xs text-slate-400">Tap any date to view and schedule</p>
+          <p class="text-xs text-slate-400">Select any day to inspect your schedule</p>
         </div>
         <div class="flex items-center gap-1.5">
-          <button onclick="Calendar.goToToday()" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+          <button onclick="Calendar.goToToday()" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
             Today
           </button>
           <button onclick="Calendar.prevMonth()" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition" title="Previous Month">
@@ -112,24 +110,31 @@
         <div id="calendar-days-grid" class="calendar-grid"></div>
       </div>
 
-      <!-- Day Agenda Section -->
+      <!-- Day Schedule Section with Timeline / Agenda Switcher -->
       <div class="bg-slate-900/60 rounded-2xl p-4 md:p-5 border border-slate-800/80 shadow-md">
-        <div class="flex items-center justify-between mb-4">
-          <div class="flex items-center gap-2">
-            <i data-lucide="list-todo" class="w-4 h-4 text-blue-400"></i>
-            <h3 id="day-events-header" class="text-sm md:text-base font-bold text-slate-100">Schedule for Selected Date</h3>
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-800/80">
+          <div>
+            <h3 id="day-events-header" class="text-sm md:text-base font-bold text-slate-100">Schedule</h3>
+            <span id="selected-date-badge" class="text-xs text-blue-400 font-medium">Selected Date</span>
           </div>
-          <span id="selected-date-badge" class="text-xs px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-medium">
-            Today
-          </span>
+
+          <!-- View Mode Toggle: Timeline vs Agenda -->
+          <div class="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
+            <button id="btn-mode-timeline" onclick="Calendar.setDayViewMode('timeline')" class="px-3 py-1 text-xs font-semibold rounded-lg bg-blue-600 text-white shadow-sm transition">
+              <i data-lucide="clock" class="w-3.5 h-3.5 inline mr-1"></i>Timeline
+            </button>
+            <button id="btn-mode-agenda" onclick="Calendar.setDayViewMode('agenda')" class="px-3 py-1 text-xs font-medium rounded-lg text-slate-400 hover:text-slate-200 transition">
+              <i data-lucide="list" class="w-3.5 h-3.5 inline mr-1"></i>Agenda
+            </button>
+          </div>
         </div>
 
-        <!-- Events List -->
-        <div id="day-events-container" class="space-y-2.5"></div>
+        <!-- Events List / Timeline Container -->
+        <div id="day-events-container"></div>
       </div>
     </section>
 
-    <!-- 2. NOTES VIEW -->
+    <!-- 2. NOTES VIEW (APPLE NOTES / NOTION STYLE) -->
     <section id="view-notes" class="hidden space-y-4">
       <!-- Search & Filters -->
       <div class="flex flex-col gap-3">
@@ -137,7 +142,7 @@
           <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
           <input 
             type="text" 
-            placeholder="Search notes or markdown content..." 
+            placeholder="Search notes, checklists, or ideas..." 
             oninput="Notes.setSearch(this.value)"
             class="w-full bg-slate-900/80 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
           />
@@ -153,7 +158,7 @@
 
     <!-- 3. DISCORD & ALERTS VIEW -->
     <section id="view-discord" class="hidden space-y-5">
-      <div class="bg-gradient-to-r from-indigo-950/40 to-slate-900 p-5 rounded-2xl border border-indigo-900/30">
+      <div class="bg-gradient-to-r from-indigo-950/40 via-slate-900 to-slate-900 p-5 rounded-2xl border border-indigo-900/30">
         <div class="flex items-start gap-3">
           <div class="w-10 h-10 rounded-xl bg-indigo-600/30 flex items-center justify-center text-indigo-400 border border-indigo-500/30 shrink-0">
             <i data-lucide="bell-ring" class="w-5 h-5"></i>
@@ -161,7 +166,7 @@
           <div>
             <h2 class="text-base font-bold text-white">Discord Notification Gateway</h2>
             <p class="text-xs text-slate-400 mt-1 leading-relaxed">
-              Connect your calendar reminders to a Discord text channel via Webhooks. When calendar events trigger, an alert embed is dispatched directly to you and your community.
+              Connect your calendar reminders to a Discord channel. When events trigger, rich embeds are dispatched automatically to you or your server.
             </p>
           </div>
         </div>
@@ -182,10 +187,10 @@
             placeholder="https://discord.com/api/webhooks/..." 
             class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-600 font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none"
           />
-          <p class="text-[11px] text-slate-500 mt-1.5">Create this in your Discord Server: Channel Settings &gt; Integrations &gt; Webhooks &gt; New Webhook.</p>
+          <p class="text-[11px] text-slate-500 mt-1.5">Get this in Discord: Channel Settings &gt; Integrations &gt; Webhooks &gt; New Webhook.</p>
         </div>
 
-        <div class="flex flex-wrap items-center gap-2 pt-2">
+        <div class="flex flex-wrap items-center gap-2 pt-1">
           <button id="btn-save-discord-webhook" class="px-4 py-2 text-xs font-semibold rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white transition shadow-sm">
             Save Webhook URL
           </button>
@@ -202,29 +207,29 @@
           <i data-lucide="eye" class="w-4 h-4 text-indigo-400"></i>
           Discord Alert Embed Preview
         </h3>
-        <p class="text-xs text-slate-400">This is how your calendar events appear in your Discord channel:</p>
+        <p class="text-xs text-slate-400">Preview of your upcoming event alerts as rendered in Discord:</p>
 
-        <!-- Discord Mock Card -->
-        <div class="bg-[#2b2d31] p-4 rounded-xl max-w-lg border-l-4 border-blue-500 text-slate-200 shadow-md">
+        <!-- Discord Realistic Card -->
+        <div class="bg-[#2b2d31] p-4 rounded-xl max-w-lg discord-card-border text-slate-200 shadow-md">
           <div class="flex items-center gap-2 mb-1.5">
-            <span class="text-xs font-bold text-white" id="discord-preview-title">📅 Calendar Alert: Team Review</span>
+            <span class="text-xs font-bold text-white" id="discord-preview-title">📅 Calendar Alert: Scheduled Event</span>
           </div>
           <p class="text-xs text-slate-300 mb-2 leading-relaxed" id="discord-preview-desc">
-            Discussion of the open source calendar and notes system.
+            Event description and details will appear here.
           </p>
           <div class="grid grid-cols-2 gap-2 text-[11px] bg-[#1e1f22] p-2.5 rounded-lg mb-2">
             <div>
               <span class="text-slate-400 block font-semibold">Scheduled Date & Time</span>
-              <span class="text-slate-200 font-mono" id="discord-preview-time">Today at 14:00</span>
+              <span class="text-slate-200 font-mono" id="discord-preview-time">Today at 12:00 PM</span>
             </div>
             <div>
-              <span class="text-slate-400 block font-semibold">Channel Alert</span>
-              <span class="text-emerald-400 font-medium">Ready</span>
+              <span class="text-slate-400 block font-semibold">Category</span>
+              <span class="text-blue-400 font-medium" id="discord-preview-category">WORK</span>
             </div>
           </div>
           <div class="text-[10px] text-slate-400 flex items-center justify-between border-t border-slate-700/50 pt-1.5">
-            <span>Calendar-Notes-Discord Notification</span>
-            <span>Just now</span>
+            <span>Calendar-Notes-Discord</span>
+            <span>Upcoming alert</span>
           </div>
         </div>
       </div>
@@ -246,13 +251,13 @@
             <strong class="text-slate-200">1. On your Mac:</strong> Run <code class="bg-slate-800 text-blue-400 px-1.5 py-0.5 rounded">python3 run.py</code> in the repository.
           </p>
           <p>
-            <strong class="text-slate-200">2. Tailscale / LAN:</strong> Open your mobile browser and enter your Mac's IP (e.g., <code class="bg-slate-800 text-blue-400 px-1.5 py-0.5 rounded">http://100.x.y.z:8000</code>).
+            <strong class="text-slate-200">2. Tailscale / LAN:</strong> On your phone, visit your Tailscale IP (e.g., <code class="bg-slate-800 text-blue-400 px-1.5 py-0.5 rounded">http://100.x.y.z:8000</code>).
           </p>
           <p>
             <strong class="text-slate-200">3. Install as Web App:</strong>
             <ul class="list-disc pl-5 mt-1 space-y-1 text-slate-400">
-              <li><strong>iOS (Safari):</strong> Tap the <em>Share</em> button &rarr; select <em>Add to Home Screen</em>.</li>
-              <li><strong>Android (Chrome):</strong> Tap the three dots menu &rarr; select <em>Install App</em> or <em>Add to Home Screen</em>.</li>
+              <li><strong>iOS (Safari):</strong> Tap <em>Share</em> &rarr; <em>Add to Home Screen</em>.</li>
+              <li><strong>Android (Chrome):</strong> Tap <em>Menu (...)</em> &rarr; <em>Install App</em>.</li>
             </ul>
           </p>
         </div>
@@ -282,7 +287,7 @@
 
       <!-- About & Version -->
       <div class="p-4 rounded-2xl bg-slate-900/40 border border-slate-800/50 text-center text-xs text-slate-500 space-y-1">
-        <p class="font-medium text-slate-400">Calendar-Notes-Discord • v0.1.0</p>
+        <p class="font-medium text-slate-400">Calendar-Notes-Discord • v0.2.0</p>
         <p>Open Source Personal Productivity & Notification Architecture</p>
       </div>
     </section>
@@ -290,7 +295,7 @@
   </main>
 
   <!-- BOTTOM NAVIGATION (MOBILE FIRST) -->
-  <nav class="fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-lg border-t border-slate-800/90 pb-safe">
+  <nav class="fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-xl border-t border-slate-800/90 pb-safe">
     <div class="max-w-md mx-auto grid grid-cols-4 py-2 px-3">
       <button data-nav-tab="calendar" class="flex flex-col items-center justify-center gap-1 py-1 text-blue-500 font-semibold transition active:scale-95">
         <i data-lucide="calendar" class="w-5 h-5"></i>
@@ -314,11 +319,11 @@
     </div>
   </nav>
 
-  <!-- MODAL: NEW / EDIT EVENT -->
-  <div id="event-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop">
-    <div class="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl p-5 space-y-4">
+  <!-- REDESIGNED MODAL: SCHEDULE / EDIT EVENT -->
+  <div id="event-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 md:p-4 modal-backdrop">
+    <div class="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-lg max-h-[92vh] overflow-y-auto shadow-2xl p-5 space-y-4">
       <div class="flex items-center justify-between pb-2 border-b border-slate-800">
-        <h3 class="text-base font-bold text-white flex items-center gap-2">
+        <h3 id="event-modal-title" class="text-base font-bold text-white flex items-center gap-2">
           <i data-lucide="calendar-plus" class="w-4 h-4 text-blue-400"></i>
           Schedule Event
         </h3>
@@ -327,50 +332,88 @@
         </button>
       </div>
 
-      <form id="event-form" class="space-y-3.5">
+      <form id="event-form" class="space-y-4">
+        <!-- Event Title -->
         <div>
-          <label class="block text-xs font-semibold text-slate-400 mb-1">Event Title *</label>
-          <input id="event-title-input" type="text" placeholder="e.g. Design Sync, Gym, Doctor appointment" required
-                 class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-sm text-slate-100 placeholder-slate-600 focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+          <label class="block text-xs font-semibold text-slate-400 mb-1">Title *</label>
+          <input id="event-title-input" type="text" placeholder="e.g. Weekly Standup, Gym Workout, Project Review" required
+                 class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:ring-2 focus:ring-blue-500 focus:outline-none" />
         </div>
 
-        <div class="grid grid-cols-2 gap-2.5">
+        <!-- Date & All-Day Toggle -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
           <div>
             <label class="block text-xs font-semibold text-slate-400 mb-1">Date *</label>
             <input id="event-date-input" type="date" required
                    class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 focus:ring-2 focus:ring-blue-500 focus:outline-none" />
           </div>
+
+          <!-- All Day Switch -->
+          <div class="flex items-center justify-between sm:justify-start gap-3 pt-2 sm:pt-4">
+            <span class="text-xs font-semibold text-slate-300">All-Day Event</span>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input id="event-allday-toggle" type="checkbox" class="sr-only peer">
+              <div class="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Time Controls & Smart Duration Chips -->
+        <div id="time-inputs-container" class="space-y-2 p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 transition-all">
+          <div class="grid grid-cols-2 gap-2.5">
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-400 mb-1">Start Time</label>
+              <input id="event-time-start" type="time" value="09:00"
+                     class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-1.5 text-xs text-slate-100 focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-400 mb-1">End Time</label>
+              <input id="event-time-end" type="time" value="10:00"
+                     class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-1.5 text-xs text-slate-100 focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono" />
+            </div>
+          </div>
+
+          <!-- Quick Duration Presets -->
+          <div>
+            <span class="text-[10px] uppercase font-bold text-slate-500 tracking-wider block mb-1">Quick Duration Presets</span>
+            <div class="flex flex-wrap items-center gap-1.5">
+              <button type="button" data-duration-pill="15" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition">15m</button>
+              <button type="button" data-duration-pill="30" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition">30m</button>
+              <button type="button" data-duration-pill="45" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition">45m</button>
+              <button type="button" data-duration-pill="60" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-blue-600 text-white shadow-sm">1h</button>
+              <button type="button" data-duration-pill="90" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition">1.5h</button>
+              <button type="button" data-duration-pill="120" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition">2h</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Category & Location -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           <div>
             <label class="block text-xs font-semibold text-slate-400 mb-1">Category</label>
             <select id="event-category-select" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 focus:ring-2 focus:ring-blue-500 focus:outline-none">
               <option value="work">Work (Blue)</option>
               <option value="personal">Personal (Green)</option>
-              <option value="urgent">Urgent (Red)</option>
+              <option value="urgent">Urgent (Rose)</option>
               <option value="routine">Routine (Purple)</option>
+              <option value="social">Social (Amber)</option>
             </select>
           </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-2.5">
           <div>
-            <label class="block text-xs font-semibold text-slate-400 mb-1">Start Time</label>
-            <input id="event-time-start" type="time"
-                   class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 focus:ring-2 focus:ring-blue-500 focus:outline-none" />
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-slate-400 mb-1">End Time</label>
-            <input id="event-time-end" type="time"
-                   class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Location or Link</label>
+            <input id="event-location-input" type="text" placeholder="Discord Voice, Meet link, or place"
+                   class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-600 focus:ring-2 focus:ring-blue-500 focus:outline-none" />
           </div>
         </div>
 
+        <!-- Description -->
         <div>
-          <label class="block text-xs font-semibold text-slate-400 mb-1">Description / Agenda</label>
-          <textarea id="event-desc-input" rows="2" placeholder="Optional notes or context..."
+          <label class="block text-xs font-semibold text-slate-400 mb-1">Description / Notes</label>
+          <textarea id="event-desc-input" rows="2" placeholder="Agenda or notes for this event..."
                     class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-100 placeholder-slate-600 focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
         </div>
 
-        <!-- Discord Alert Configuration -->
+        <!-- Discord Alert Section -->
         <div class="p-3 rounded-xl bg-indigo-950/30 border border-indigo-900/40 space-y-2">
           <div class="flex items-center justify-between">
             <label for="event-discord-toggle" class="text-xs font-semibold text-indigo-300 flex items-center gap-1.5 cursor-pointer">
@@ -382,7 +425,7 @@
           </div>
 
           <div class="flex items-center justify-between text-xs">
-            <span class="text-slate-400 text-[11px]">Notify me:</span>
+            <span class="text-slate-400 text-[11px]">Reminder timing:</span>
             <select id="event-discord-timing" class="bg-slate-900 border border-indigo-900/50 rounded-lg px-2 py-1 text-[11px] text-indigo-200 focus:outline-none">
               <option value="at_time">At time of event</option>
               <option value="15m" selected>15 minutes before</option>
@@ -405,45 +448,83 @@
     </div>
   </div>
 
-  <!-- MODAL: NOTE EDITOR -->
+  <!-- REDESIGNED NOTE MODAL: UNIFIED RICH DOCUMENT (APPLE NOTES / NOTION STYLE) -->
   <div id="note-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 md:p-4 modal-backdrop">
     <div class="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-2xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
-      <!-- Editor Header -->
+      <!-- Note Header -->
       <div class="flex items-center justify-between p-4 border-b border-slate-800">
         <input id="note-title-input" type="text" placeholder="Note Title..."
-               class="text-base font-bold text-white bg-transparent border-none focus:outline-none w-full mr-2 placeholder-slate-600" />
+               class="text-base md:text-lg font-bold text-white bg-transparent border-none focus:outline-none w-full mr-2 placeholder-slate-600" />
         <button id="btn-close-note-modal" class="text-slate-400 hover:text-white p-1 rounded-lg">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
 
-      <!-- Editor Content & Live Preview Split/Tab -->
-      <div class="flex-1 overflow-y-auto p-4 space-y-3">
-        <div>
-          <label class="block text-[11px] font-semibold text-slate-400 mb-1">Tags (comma separated)</label>
-          <input id="note-tags-input" type="text" placeholder="ideas, project, meetings, personal"
-                 class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-100 placeholder-slate-600 focus:ring-1 focus:ring-blue-500 focus:outline-none" />
+      <!-- Formatting Toolbar (Apple Notes style) -->
+      <div class="flex flex-wrap items-center gap-1 p-2 bg-slate-950/80 border-b border-slate-800 text-slate-300">
+        <button type="button" onclick="Notes.insertHeading(1)" class="rich-toolbar-btn px-2 py-1 text-xs font-bold rounded-lg hover:bg-slate-800 text-slate-200" title="Heading 1">H1</button>
+        <button type="button" onclick="Notes.insertHeading(2)" class="rich-toolbar-btn px-2 py-1 text-xs font-semibold rounded-lg hover:bg-slate-800 text-slate-200" title="Heading 2">H2</button>
+        <span class="w-[1px] h-4 bg-slate-800 mx-1"></span>
+
+        <button type="button" onclick="Notes.formatDoc('bold')" class="rich-toolbar-btn p-1.5 rounded-lg hover:bg-slate-800 text-slate-200" title="Bold">
+          <i data-lucide="bold" class="w-3.5 h-3.5"></i>
+        </button>
+        <button type="button" onclick="Notes.formatDoc('italic')" class="rich-toolbar-btn p-1.5 rounded-lg hover:bg-slate-800 text-slate-200" title="Italic">
+          <i data-lucide="italic" class="w-3.5 h-3.5"></i>
+        </button>
+        <button type="button" onclick="Notes.formatDoc('underline')" class="rich-toolbar-btn p-1.5 rounded-lg hover:bg-slate-800 text-slate-200" title="Underline">
+          <i data-lucide="underline" class="w-3.5 h-3.5"></i>
+        </button>
+        <span class="w-[1px] h-4 bg-slate-800 mx-1"></span>
+
+        <button type="button" onclick="Notes.insertChecklist()" class="rich-toolbar-btn px-2 py-1 text-xs font-medium rounded-lg bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 flex items-center gap-1" title="Interactive Checklist">
+          <i data-lucide="check-square" class="w-3.5 h-3.5"></i>
+          <span>To-Do</span>
+        </button>
+        <button type="button" onclick="Notes.formatDoc('insertUnorderedList')" class="rich-toolbar-btn p-1.5 rounded-lg hover:bg-slate-800 text-slate-200" title="Bullet List">
+          <i data-lucide="list" class="w-3.5 h-3.5"></i>
+        </button>
+        <button type="button" onclick="Notes.formatDoc('insertOrderedList')" class="rich-toolbar-btn p-1.5 rounded-lg hover:bg-slate-800 text-slate-200" title="Numbered List">
+          <i data-lucide="list-ordered" class="w-3.5 h-3.5"></i>
+        </button>
+        <button type="button" onclick="Notes.insertQuote()" class="rich-toolbar-btn p-1.5 rounded-lg hover:bg-slate-800 text-slate-200" title="Quote">
+          <i data-lucide="quote" class="w-3.5 h-3.5"></i>
+        </button>
+
+        <!-- Color theme picker -->
+        <div class="flex items-center gap-1.5 ml-auto pl-2">
+          <span class="text-[10px] text-slate-500 uppercase font-semibold hidden sm:inline">Color</span>
+          <button type="button" data-note-color-btn="slate" class="w-4 h-4 rounded-full bg-slate-600 transition" title="Slate"></button>
+          <button type="button" data-note-color-btn="blue" class="w-4 h-4 rounded-full bg-blue-500 transition" title="Blue"></button>
+          <button type="button" data-note-color-btn="emerald" class="w-4 h-4 rounded-full bg-emerald-500 transition" title="Emerald"></button>
+          <button type="button" data-note-color-btn="purple" class="w-4 h-4 rounded-full bg-purple-500 transition" title="Purple"></button>
+          <button type="button" data-note-color-btn="amber" class="w-4 h-4 rounded-full bg-amber-500 transition" title="Amber"></button>
         </div>
+      </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 min-h-[220px]">
-          <!-- Markdown Input -->
-          <div class="flex flex-col">
-            <span class="text-[11px] font-semibold text-slate-400 mb-1">Markdown Editor</span>
-            <textarea id="note-content-input" placeholder="# Write your note in markdown...&#10;- Task 1&#10;- [x] Completed item"
-                      class="flex-1 w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs font-mono text-slate-200 placeholder-slate-600 focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none min-h-[200px]"></textarea>
+      <!-- Single Unified Document Canvas (Apple Notes style) -->
+      <div class="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
+        <div id="note-editor-canvas" contenteditable="true" placeholder="Start typing your note here... Use the toolbar above to add headings, bold text, or to-do checklists."
+             class="rich-editor-canvas w-full bg-transparent focus:outline-none"></div>
+
+        <!-- Metadata: Tags & Date linking -->
+        <div class="pt-4 border-t border-slate-800/80 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Tags (e.g. ideas, work, meeting)</label>
+            <input id="note-tags-input" type="text" placeholder="ideas, roadmap, quick"
+                   class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-100 placeholder-slate-600 focus:ring-1 focus:ring-blue-500 focus:outline-none" />
           </div>
-
-          <!-- Live Preview Pane -->
-          <div class="flex flex-col">
-            <span class="text-[11px] font-semibold text-slate-400 mb-1">Live Preview</span>
-            <div id="note-preview-pane" class="markdown-body flex-1 bg-slate-950/60 border border-slate-800/80 rounded-xl p-3 text-xs text-slate-300 overflow-y-auto min-h-[200px]"></div>
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Attach to Calendar Date</label>
+            <input id="note-link-date" type="date"
+                   class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-100 focus:ring-1 focus:ring-blue-500 focus:outline-none" />
           </div>
         </div>
       </div>
 
       <!-- Editor Footer -->
-      <div class="flex items-center justify-between p-3.5 border-t border-slate-800 bg-slate-950/40">
-        <span class="text-[11px] text-slate-500 hidden sm:inline">Supports standard Markdown & checkboxes</span>
+      <div class="flex items-center justify-between p-3.5 border-t border-slate-800 bg-slate-950/60">
+        <span class="text-[11px] text-slate-500">Changes save locally to your device</span>
         <div class="flex items-center gap-2 ml-auto">
           <button type="button" onclick="Notes.closeEditor()" class="px-4 py-1.5 text-xs font-medium rounded-xl text-slate-400 hover:text-slate-200">
             Cancel
@@ -458,7 +539,7 @@
 
   <!-- FLOATING TOAST -->
   <div id="app-toast" class="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
-    <div class="bg-blue-600 text-white text-xs font-medium px-4 py-2.5 rounded-full shadow-xl shadow-blue-600/30 flex items-center gap-2 border border-blue-400/40">
+    <div class="bg-blue-600 text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-xl shadow-blue-600/40 flex items-center gap-2 border border-blue-400/40">
       <i data-lucide="check-circle" class="w-4 h-4 text-white"></i>
       <span id="toast-message">Action successful</span>
     </div>

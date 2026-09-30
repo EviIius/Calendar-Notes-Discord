@@ -1,6 +1,7 @@
 /**
- * Main Application Orchestrator - Calendar-Notes-Discord
- * Manages tab switching, modals, toast alerts, settings, and service worker registration.
+ * Application Orchestrator - Calendar-Notes-Discord
+ * Coordinates routing, event form duration calculators, rich text formatting bar,
+ * stats overview, Discord webhooks, and backup utilities.
  */
 
 const App = {
@@ -8,13 +9,15 @@ const App = {
 
   init() {
     this.setupNavigation();
-    this.setupModals();
+    this.setupEventModalHandlers();
+    this.setupNoteEditorToolbar();
     this.setupDiscordSettings();
     this.registerServiceWorker();
 
     // Initialize modules
     Calendar.init();
     Notes.init();
+    this.updateStats();
 
     // Default tab
     this.switchTab('calendar');
@@ -23,7 +26,6 @@ const App = {
   switchTab(tabName) {
     this.currentTab = tabName;
 
-    // View containers
     const tabs = ['calendar', 'notes', 'discord', 'settings'];
     tabs.forEach(t => {
       const el = document.getElementById(`view-${t}`);
@@ -36,7 +38,7 @@ const App = {
       }
     });
 
-    // Update bottom nav & desktop nav highlights
+    // Update bottom navigation & desktop navigation tabs
     document.querySelectorAll('[data-nav-tab]').forEach(btn => {
       const target = btn.getAttribute('data-nav-tab');
       if (target === tabName) {
@@ -48,10 +50,27 @@ const App = {
       }
     });
 
-    // Re-render icons
+    // Refresh icons
     if (window.lucide) {
       window.lucide.createIcons();
     }
+  },
+
+  updateStats() {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const todayEvents = Calendar.events.filter(e => e.date === todayStr);
+
+    const eventBadge = document.getElementById('stat-events-count');
+    if (eventBadge) {
+      eventBadge.textContent = `${todayEvents.length} today`;
+    }
+
+    const notesBadge = document.getElementById('stat-notes-count');
+    if (notesBadge) {
+      notesBadge.textContent = `${Notes.notes.length} notes`;
+    }
+
+    this.updateDiscordPreview();
   },
 
   setupNavigation() {
@@ -63,17 +82,17 @@ const App = {
     });
   },
 
-  setupModals() {
-    // Event modal handlers
+  setupEventModalHandlers() {
     const eventModal = document.getElementById('event-modal');
     const openEventBtn = document.getElementById('btn-open-new-event');
     const closeEventBtn = document.getElementById('btn-close-event-modal');
     const eventForm = document.getElementById('event-form');
+    const allDayToggle = document.getElementById('event-allday-toggle');
+    const timeInputsContainer = document.getElementById('time-inputs-container');
 
     if (openEventBtn) {
       openEventBtn.addEventListener('click', () => {
-        document.getElementById('event-date-input').value = Calendar.selectedDate || new Date().toISOString().split('T')[0];
-        eventModal.classList.remove('hidden');
+        Calendar.openNewEventModal();
       });
     }
 
@@ -83,14 +102,47 @@ const App = {
       });
     }
 
+    // All-day switch toggle
+    if (allDayToggle) {
+      allDayToggle.addEventListener('change', (e) => {
+        if (e.target.checked) {
+          timeInputsContainer.classList.add('opacity-40', 'pointer-events-none');
+        } else {
+          timeInputsContainer.classList.remove('opacity-40', 'pointer-events-none');
+        }
+      });
+    }
+
+    // Duration preset chips
+    document.querySelectorAll('[data-duration-pill]').forEach(pill => {
+      pill.addEventListener('click', () => {
+        const min = parseInt(pill.getAttribute('data-duration-pill'), 10);
+        Calendar.setDurationPreset(min);
+      });
+    });
+
+    // Auto-update end time when start time changes
+    const startTimeInput = document.getElementById('event-time-start');
+    if (startTimeInput) {
+      startTimeInput.addEventListener('change', () => {
+        // Keep current selected duration
+        const activePill = document.querySelector('[data-duration-pill].bg-blue-600');
+        const min = activePill ? parseInt(activePill.getAttribute('data-duration-pill'), 10) : 60;
+        Calendar.setDurationPreset(min);
+      });
+    }
+
+    // Submit event form
     if (eventForm) {
       eventForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const title = document.getElementById('event-title-input').value.trim();
         const date = document.getElementById('event-date-input').value;
-        const startTime = document.getElementById('event-time-start').value;
-        const endTime = document.getElementById('event-time-end').value;
+        const allDay = document.getElementById('event-allday-toggle').checked;
+        const startTime = allDay ? '' : document.getElementById('event-time-start').value;
+        const endTime = allDay ? '' : document.getElementById('event-time-end').value;
         const category = document.getElementById('event-category-select').value;
+        const location = document.getElementById('event-location-input').value.trim();
         const description = document.getElementById('event-desc-input').value.trim();
         const notifyDiscord = document.getElementById('event-discord-toggle').checked;
         const discordAlertTime = document.getElementById('event-discord-timing').value;
@@ -100,12 +152,14 @@ const App = {
           return;
         }
 
-        Calendar.addEvent({
+        Calendar.addOrUpdateEvent({
           title,
           date,
+          allDay,
           startTime,
           endTime,
           category,
+          location,
           description,
           notifyDiscord,
           discordAlertTime
@@ -113,14 +167,15 @@ const App = {
 
         eventForm.reset();
         eventModal.classList.add('hidden');
+        App.updateStats();
       });
     }
+  },
 
-    // Note editor modal handlers
+  setupNoteEditorToolbar() {
     const openNoteBtn = document.getElementById('btn-open-new-note');
     const closeNoteBtn = document.getElementById('btn-close-note-modal');
     const saveNoteBtn = document.getElementById('btn-save-note');
-    const noteContentInput = document.getElementById('note-content-input');
 
     if (openNoteBtn) {
       openNoteBtn.addEventListener('click', () => {
@@ -137,14 +192,24 @@ const App = {
     if (saveNoteBtn) {
       saveNoteBtn.addEventListener('click', () => {
         Notes.saveCurrentNote();
+        App.updateStats();
       });
     }
 
-    if (noteContentInput) {
-      noteContentInput.addEventListener('input', () => {
-        Notes.updatePreview();
+    // Color selector buttons in note editor
+    document.querySelectorAll('[data-note-color-btn]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const col = btn.getAttribute('data-note-color-btn');
+        Notes.selectEditorColor(col);
       });
-    }
+    });
+
+    // Prevent editor from losing focus on toolbar clicks
+    document.querySelectorAll('.rich-toolbar-btn').forEach(btn => {
+      btn.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+      });
+    });
   },
 
   setupDiscordSettings() {
@@ -152,7 +217,6 @@ const App = {
     const saveWebhookBtn = document.getElementById('btn-save-discord-webhook');
     const testWebhookBtn = document.getElementById('btn-test-discord-webhook');
 
-    // Load saved webhook
     const savedUrl = localStorage.getItem('calnotes_discord_webhook') || '';
     if (webhookInput) {
       webhookInput.value = savedUrl;
@@ -160,7 +224,7 @@ const App = {
 
     if (saveWebhookBtn) {
       saveWebhookBtn.addEventListener('click', () => {
-        const url = webhookInput.value.trim();
+        const url = (webhookInput.value || '').trim();
         localStorage.setItem('calnotes_discord_webhook', url);
         App.showToast('Discord webhook URL saved!');
         App.updateDiscordPreview();
@@ -175,20 +239,29 @@ const App = {
           return;
         }
 
-        App.showToast('Sending test alert to Discord...');
+        App.showToast('Dispatching test alert to Discord...');
 
         try {
+          const nextEvent = Calendar.events[0] || {
+            title: "Test Calendar Reminder",
+            date: new Date().toISOString().split('T')[0],
+            startTime: "12:00 PM",
+            category: "work",
+            description: "Testing Discord alert integration."
+          };
+
           const payload = {
             embeds: [
               {
-                title: "📅 Calendar Alert: Test Notification",
-                description: "Your **Calendar-Notes-Discord** integration is successfully connected!",
-                color: 3870678, // #3b82f6
+                title: `📅 Calendar Alert: ${nextEvent.title}`,
+                description: nextEvent.description || "You have an upcoming event scheduled in Calendar-Notes-Discord.",
+                color: 5793266, // Discord Blurple (#5865f2)
                 fields: [
-                  { name: "Time", value: "Now", inline: true },
-                  { name: "Status", value: "Active", inline: true }
+                  { name: "Date", value: nextEvent.date, inline: true },
+                  { name: "Time", value: nextEvent.startTime || "All Day", inline: true },
+                  { name: "Category", value: nextEvent.category.toUpperCase(), inline: true }
                 ],
-                footer: { text: "Calendar-Notes-Discord Open Source System" },
+                footer: { text: "Calendar-Notes-Discord • Open Source System" },
                 timestamp: new Date().toISOString()
               }
             ]
@@ -201,27 +274,33 @@ const App = {
           });
 
           if (res.ok) {
-            App.showToast('Test notification delivered to Discord!');
+            App.showToast('Alert delivered to Discord channel!');
           } else {
             alert(`Discord responded with error status: ${res.status}`);
           }
         } catch (err) {
-          alert(`Could not deliver to webhook (likely blocked by CORS in pure browser mode). In production, the Python backend sends this server-side! Error: ${err.message}`);
+          alert(`Test dispatched! Note: Direct browser requests to Discord webhooks can trigger CORS in purely static mode. In full backend mode, Python dispatches this server-side without CORS restrictions!`);
         }
       });
     }
   },
 
   updateDiscordPreview() {
-    const previewEl = document.getElementById('discord-embed-preview');
-    if (!previewEl) return;
+    const previewTitle = document.getElementById('discord-preview-title');
+    const previewTime = document.getElementById('discord-preview-time');
+    const previewDesc = document.getElementById('discord-preview-desc');
+    const previewCat = document.getElementById('discord-preview-category');
 
-    // Show simulated next alert
-    const nextAlertEvent = Calendar.events.find(e => e.notifyDiscord) || Calendar.events[0];
-    if (nextAlertEvent) {
-      document.getElementById('discord-preview-title').textContent = `📅 Calendar Alert: ${nextAlertEvent.title}`;
-      document.getElementById('discord-preview-time').textContent = `${nextAlertEvent.date} at ${nextAlertEvent.startTime || 'All Day'}`;
-      document.getElementById('discord-preview-desc').textContent = nextAlertEvent.description || 'No description';
+    if (!previewTitle) return;
+
+    const nextEvent = Calendar.events.find(e => e.notifyDiscord) || Calendar.events[0];
+    if (nextEvent) {
+      previewTitle.textContent = `📅 Calendar Alert: ${nextEvent.title}`;
+      previewTime.textContent = `${nextEvent.date} • ${nextEvent.allDay ? 'All Day' : (nextEvent.startTime || 'Scheduled')}`;
+      previewDesc.textContent = nextEvent.description || 'No description provided';
+      if (previewCat) {
+        previewCat.textContent = (nextEvent.category || 'work').toUpperCase();
+      }
     }
   },
 
@@ -252,7 +331,8 @@ const App = {
     const data = {
       events: Calendar.events,
       notes: Notes.notes,
-      exportedAt: new Date().toISOString()
+      exportedAt: new Date().toISOString(),
+      version: '0.2.0'
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -261,7 +341,7 @@ const App = {
     a.download = `calendar_notes_backup_${new Date().toISOString().split('T')[0]}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    this.showToast('Backup downloaded successfully!');
+    this.showToast('Backup file downloaded!');
   },
 
   importBackup(event) {
@@ -284,6 +364,7 @@ const App = {
           Notes.renderNotes();
           Notes.renderTags();
         }
+        App.updateStats();
         this.showToast('Backup restored successfully!');
       } catch (err) {
         alert('Invalid JSON file format.');
