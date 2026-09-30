@@ -1,0 +1,16 @@
+{
+  "name": "Calendar & Notes",
+  "short_name": "CalNotes",
+  "description": "Lightweight open-source calendar and note-taking system with Discord integration",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#3b82f6",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%233b82f6'/><path d='M25 35h50v45H25z' fill='none' stroke='white' stroke-width='6'/><path d='M25 45h50' stroke='white' stroke-width='4'/><circle cx='40' cy='60' r='5' fill='white'/><circle cx='60' cy='60' r='5' fill='white'/></svg>",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}

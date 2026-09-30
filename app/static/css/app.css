@@ -1,0 +1,80 @@
+/* Calendar-Notes-Discord UI Styles */
+:root {
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+  --bg-dark: #0f172a;
+  --card-dark: #1e293b;
+  --border-dark: #334155;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+}
+
+/* Smooth mobile scrolling & tap highlight removal */
+html, body {
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* Calendar Month Grid */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 2px;
+}
+
+.calendar-day-cell {
+  aspect-ratio: 1 / 1;
+  min-height: 48px;
+  transition: all 0.15s ease;
+}
+
+@media (min-width: 768px) {
+  .calendar-day-cell {
+    aspect-ratio: auto;
+    min-height: 90px;
+  }
+}
+
+/* Modal transitions */
+.modal-backdrop {
+  background-color: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(4px);
+}
+
+/* Mobile safe areas (notch / bottom home bar) */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 16px);
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 16px);
+}
+
+/* Markdown preview typography */
+.markdown-body h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; color: #f8fafc; }
+.markdown-body h2 { font-size: 1.25rem; font-weight: 600; margin-top: 1rem; margin-bottom: 0.5rem; color: #f1f5f9; }
+.markdown-body h3 { font-size: 1.1rem; font-weight: 600; margin-top: 0.75rem; margin-bottom: 0.25rem; color: #e2e8f0; }
+.markdown-body p { margin-bottom: 0.75rem; line-height: 1.6; color: #cbd5e1; }
+.markdown-body ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 0.75rem; color: #cbd5e1; }
+.markdown-body ol { list-style-type: decimal; padding-left: 1.5rem; margin-bottom: 0.75rem; color: #cbd5e1; }
+.markdown-body code { background: #334155; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; font-family: monospace; }
+.markdown-body pre { background: #0b1120; padding: 12px; border-radius: 8px; overflow-x: auto; margin-bottom: 0.75rem; }
+.markdown-body pre code { background: transparent; padding: 0; }
+.markdown-body blockquote { border-left: 3px solid #3b82f6; padding-left: 12px; color: #94a3b8; font-style: italic; margin-bottom: 0.75rem; }
+.markdown-body input[type="checkbox"] { margin-right: 0.5rem; accent-color: #3b82f6; }

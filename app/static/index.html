@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Calendar & Notes</title>
+
+  <!-- PWA & Mobile Meta -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="CalNotes">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons & Marked (Markdown Parser) CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <!-- App Stylesheet -->
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-blue-500 selection:text-white">
+
+  <!-- TOP HEADER -->
+  <header class="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-md border-b border-slate-800/80 px-4 py-3 pt-safe">
+    <div class="max-w-5xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-blue-500/25">
+          <i data-lucide="calendar" class="w-5 h-5 text-white"></i>
+        </div>
+        <div>
+          <h1 class="text-sm font-bold tracking-tight text-white flex items-center gap-1.5">
+            Calendar & Notes
+            <span class="text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">Local</span>
+          </h1>
+          <p class="text-[11px] text-slate-400 font-medium">Discord-connected</p>
+        </div>
+      </div>
+
+      <!-- Quick Action Buttons -->
+      <div class="flex items-center gap-2">
+        <button id="btn-open-new-event" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-600/20 active:scale-95 transition">
+          <i data-lucide="plus" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">Event</span>
+        </button>
+        <button id="btn-open-new-note" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 active:scale-95 transition">
+          <i data-lucide="file-plus" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">Note</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN VIEWPORT -->
+  <main class="flex-1 max-w-5xl w-full mx-auto p-4 pb-28 md:pb-12">
+
+    <!-- 1. CALENDAR VIEW -->
+    <section id="view-calendar" class="space-y-5">
+      <!-- Calendar Navigation & Header -->
+      <div class="flex items-center justify-between bg-slate-900/60 p-4 rounded-2xl border border-slate-800/80 shadow-sm">
+        <div>
+          <h2 id="calendar-month-title" class="text-lg md:text-xl font-bold text-white tracking-tight">Month Year</h2>
+          <p class="text-xs text-slate-400">Tap any date to view and schedule</p>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <button onclick="Calendar.goToToday()" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+            Today
+          </button>
+          <button onclick="Calendar.prevMonth()" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition" title="Previous Month">
+            <i data-lucide="chevron-left" class="w-4 h-4"></i>
+          </button>
+          <button onclick="Calendar.nextMonth()" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition" title="Next Month">
+            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Month Grid Card -->
+      <div class="bg-slate-900/60 rounded-2xl p-3 md:p-5 border border-slate-800/80 shadow-md">
+        <!-- Weekday Labels -->
+        <div class="grid grid-cols-7 gap-2 mb-2 text-center text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+          <span class="text-rose-400/80">Sun</span>
+          <span>Mon</span>
+          <span>Tue</span>
+          <span>Wed</span>
+          <span>Thu</span>
+          <span>Fri</span>
+          <span class="text-blue-400/80">Sat</span>
+        </div>
+
+        <!-- Days Grid -->
+        <div id="calendar-days-grid" class="calendar-grid"></div>
+      </div>
+
+      <!-- Day Agenda Section -->
+      <div class="bg-slate-900/60 rounded-2xl p-4 md:p-5 border border-slate-800/80 shadow-md">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <i data-lucide="list-todo" class="w-4 h-4 text-blue-400"></i>
+            <h3 id="day-events-header" class="text-sm md:text-base font-bold text-slate-100">Schedule for Selected Date</h3>
+          </div>
+          <span id="selected-date-badge" class="text-xs px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-medium">
+            Today
+          </span>
+        </div>
+
+        <!-- Events List -->
+        <div id="day-events-container" class="space-y-2.5"></div>
+      </div>
+    </section>
+
+    <!-- 2. NOTES VIEW -->
+    <section id="view-notes" class="hidden space-y-4">
+      <!-- Search & Filters -->
+      <div class="flex flex-col gap-3">
+        <div class="relative">
+          <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+          <input 
+            type="text" 
+            placeholder="Search notes or markdown content..." 
+            oninput="Notes.setSearch(this.value)"
+            class="w-full bg-slate-900/80 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+          />
+        </div>
+
+        <!-- Tag Filter Pills -->
+        <div id="notes-tags-bar" class="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none"></div>
+      </div>
+
+      <!-- Notes Grid -->
+      <div id="notes-list-container" class="grid grid-cols-1 md:grid-cols-2 gap-3.5"></div>
+    </section>
+
+    <!-- 3. DISCORD & ALERTS VIEW -->
+    <section id="view-discord" class="hidden space-y-5">
+      <div class="bg-gradient-to-r from-indigo-950/40 to-slate-900 p-5 rounded-2xl border border-indigo-900/30">
+        <div class="flex items-start gap-3">
+          <div class="w-10 h-10 rounded-xl bg-indigo-600/30 flex items-center justify-center text-indigo-400 border border-indigo-500/30 shrink-0">
+            <i data-lucide="bell-ring" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h2 class="text-base font-bold text-white">Discord Notification Gateway</h2>
+            <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+              Connect your calendar reminders to a Discord text channel via Webhooks. When calendar events trigger, an alert embed is dispatched directly to you and your community.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Webhook Configuration -->
+      <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800/80 space-y-4">
+        <h3 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+          <i data-lucide="link" class="w-4 h-4 text-blue-400"></i>
+          Discord Webhook Settings
+        </h3>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1.5">Webhook URL</label>
+          <input 
+            id="discord-webhook-url" 
+            type="url" 
+            placeholder="https://discord.com/api/webhooks/..." 
+            class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-600 font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+          />
+          <p class="text-[11px] text-slate-500 mt-1.5">Create this in your Discord Server: Channel Settings &gt; Integrations &gt; Webhooks &gt; New Webhook.</p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2 pt-2">
+          <button id="btn-save-discord-webhook" class="px-4 py-2 text-xs font-semibold rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white transition shadow-sm">
+            Save Webhook URL
+          </button>
+          <button id="btn-test-discord-webhook" class="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1.5">
+            <i data-lucide="send" class="w-3.5 h-3.5"></i>
+            Send Test Alert
+          </button>
+        </div>
+      </div>
+
+      <!-- Live Embed Preview -->
+      <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800/80 space-y-3">
+        <h3 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+          <i data-lucide="eye" class="w-4 h-4 text-indigo-400"></i>
+          Discord Alert Embed Preview
+        </h3>
+        <p class="text-xs text-slate-400">This is how your calendar events appear in your Discord channel:</p>
+
+        <!-- Discord Mock Card -->
+        <div class="bg-[#2b2d31] p-4 rounded-xl max-w-lg border-l-4 border-blue-500 text-slate-200 shadow-md">
+          <div class="flex items-center gap-2 mb-1.5">
+            <span class="text-xs font-bold text-white" id="discord-preview-title">📅 Calendar Alert: Team Review</span>
+          </div>
+          <p class="text-xs text-slate-300 mb-2 leading-relaxed" id="discord-preview-desc">
+            Discussion of the open source calendar and notes system.
+          </p>
+          <div class="grid grid-cols-2 gap-2 text-[11px] bg-[#1e1f22] p-2.5 rounded-lg mb-2">
+            <div>
+              <span class="text-slate-400 block font-semibold">Scheduled Date & Time</span>
+              <span class="text-slate-200 font-mono" id="discord-preview-time">Today at 14:00</span>
+            </div>
+            <div>
+              <span class="text-slate-400 block font-semibold">Channel Alert</span>
+              <span class="text-emerald-400 font-medium">Ready</span>
+            </div>
+          </div>
+          <div class="text-[10px] text-slate-400 flex items-center justify-between border-t border-slate-700/50 pt-1.5">
+            <span>Calendar-Notes-Discord Notification</span>
+            <span>Just now</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. SETTINGS & TAILSCALE VIEW -->
+    <section id="view-settings" class="hidden space-y-5">
+      <!-- Tailscale & Mobile Instructions -->
+      <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800/80 space-y-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+            <i data-lucide="smartphone" class="w-4 h-4"></i>
+          </div>
+          <h3 class="text-sm font-bold text-slate-100">Mobile Installation & Tailscale</h3>
+        </div>
+
+        <div class="space-y-2 text-xs text-slate-400 leading-relaxed">
+          <p>
+            <strong class="text-slate-200">1. On your Mac:</strong> Run <code class="bg-slate-800 text-blue-400 px-1.5 py-0.5 rounded">python3 run.py</code> in the repository.
+          </p>
+          <p>
+            <strong class="text-slate-200">2. Tailscale / LAN:</strong> Open your mobile browser and enter your Mac's IP (e.g., <code class="bg-slate-800 text-blue-400 px-1.5 py-0.5 rounded">http://100.x.y.z:8000</code>).
+          </p>
+          <p>
+            <strong class="text-slate-200">3. Install as Web App:</strong>
+            <ul class="list-disc pl-5 mt-1 space-y-1 text-slate-400">
+              <li><strong>iOS (Safari):</strong> Tap the <em>Share</em> button &rarr; select <em>Add to Home Screen</em>.</li>
+              <li><strong>Android (Chrome):</strong> Tap the three dots menu &rarr; select <em>Install App</em> or <em>Add to Home Screen</em>.</li>
+            </ul>
+          </p>
+        </div>
+      </div>
+
+      <!-- Backup / Restore -->
+      <div class="bg-slate-900/60 p-5 rounded-2xl border border-slate-800/80 space-y-3">
+        <h3 class="text-sm font-bold text-slate-100 flex items-center gap-2">
+          <i data-lucide="hard-drive-download" class="w-4 h-4 text-blue-400"></i>
+          Data Management & Local Backups
+        </h3>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          Export your entire calendar and note library to a portable JSON file, or restore from a previous backup.
+        </p>
+        <div class="flex flex-wrap items-center gap-2 pt-2">
+          <button onclick="App.exportBackup()" class="px-4 py-2 text-xs font-semibold rounded-xl bg-blue-600 hover:bg-blue-500 text-white transition flex items-center gap-1.5">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i>
+            Export Backup (.json)
+          </button>
+          <label class="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition cursor-pointer flex items-center gap-1.5">
+            <i data-lucide="upload" class="w-3.5 h-3.5"></i>
+            Import Backup
+            <input type="file" accept=".json" onchange="App.importBackup(event)" class="hidden" />
+          </label>
+        </div>
+      </div>
+
+      <!-- About & Version -->
+      <div class="p-4 rounded-2xl bg-slate-900/40 border border-slate-800/50 text-center text-xs text-slate-500 space-y-1">
+        <p class="font-medium text-slate-400">Calendar-Notes-Discord • v0.1.0</p>
+        <p>Open Source Personal Productivity & Notification Architecture</p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- BOTTOM NAVIGATION (MOBILE FIRST) -->
+  <nav class="fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-lg border-t border-slate-800/90 pb-safe">
+    <div class="max-w-md mx-auto grid grid-cols-4 py-2 px-3">
+      <button data-nav-tab="calendar" class="flex flex-col items-center justify-center gap-1 py-1 text-blue-500 font-semibold transition active:scale-95">
+        <i data-lucide="calendar" class="w-5 h-5"></i>
+        <span class="text-[10px] tracking-tight">Calendar</span>
+      </button>
+
+      <button data-nav-tab="notes" class="flex flex-col items-center justify-center gap-1 py-1 text-slate-400 hover:text-slate-200 transition active:scale-95">
+        <i data-lucide="file-text" class="w-5 h-5"></i>
+        <span class="text-[10px] tracking-tight">Notes</span>
+      </button>
+
+      <button data-nav-tab="discord" class="flex flex-col items-center justify-center gap-1 py-1 text-slate-400 hover:text-slate-200 transition active:scale-95">
+        <i data-lucide="bell" class="w-5 h-5"></i>
+        <span class="text-[10px] tracking-tight">Discord</span>
+      </button>
+
+      <button data-nav-tab="settings" class="flex flex-col items-center justify-center gap-1 py-1 text-slate-400 hover:text-slate-200 transition active:scale-95">
+        <i data-lucide="settings" class="w-5 h-5"></i>
+        <span class="text-[10px] tracking-tight">Settings</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- MODAL: NEW / EDIT EVENT -->
+  <div id="event-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop">
+    <div class="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl p-5 space-y-4">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i data-lucide="calendar-plus" class="w-4 h-4 text-blue-400"></i>
+          Schedule Event
+        </h3>
+        <button id="btn-close-event-modal" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="event-form" class="space-y-3.5">
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1">Event Title *</label>
+          <input id="event-title-input" type="text" placeholder="e.g. Design Sync, Gym, Doctor appointment" required
+                 class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-sm text-slate-100 placeholder-slate-600 focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Date *</label>
+            <input id="event-date-input" type="date" required
+                   class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Category</label>
+            <select id="event-category-select" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+              <option value="work">Work (Blue)</option>
+              <option value="personal">Personal (Green)</option>
+              <option value="urgent">Urgent (Red)</option>
+              <option value="routine">Routine (Purple)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Start Time</label>
+            <input id="event-time-start" type="time"
+                   class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">End Time</label>
+            <input id="event-time-end" type="time"
+                   class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1">Description / Agenda</label>
+          <textarea id="event-desc-input" rows="2" placeholder="Optional notes or context..."
+                    class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-100 placeholder-slate-600 focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
+        </div>
+
+        <!-- Discord Alert Configuration -->
+        <div class="p-3 rounded-xl bg-indigo-950/30 border border-indigo-900/40 space-y-2">
+          <div class="flex items-center justify-between">
+            <label for="event-discord-toggle" class="text-xs font-semibold text-indigo-300 flex items-center gap-1.5 cursor-pointer">
+              <i data-lucide="bell" class="w-3.5 h-3.5"></i>
+              Send Discord Alert
+            </label>
+            <input id="event-discord-toggle" type="checkbox" checked
+                   class="w-4 h-4 rounded text-indigo-600 bg-slate-900 border-slate-700 focus:ring-indigo-500 cursor-pointer" />
+          </div>
+
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-slate-400 text-[11px]">Notify me:</span>
+            <select id="event-discord-timing" class="bg-slate-900 border border-indigo-900/50 rounded-lg px-2 py-1 text-[11px] text-indigo-200 focus:outline-none">
+              <option value="at_time">At time of event</option>
+              <option value="15m" selected>15 minutes before</option>
+              <option value="1h">1 hour before</option>
+              <option value="1d">1 day before</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-2">
+          <button type="button" onclick="document.getElementById('event-modal').classList.add('hidden')"
+                  class="px-4 py-2 text-xs font-medium rounded-xl text-slate-400 hover:text-slate-200">
+            Cancel
+          </button>
+          <button type="submit" class="px-5 py-2 text-xs font-semibold rounded-xl bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-600/30 transition">
+            Save Event
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: NOTE EDITOR -->
+  <div id="note-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 md:p-4 modal-backdrop">
+    <div class="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-2xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
+      <!-- Editor Header -->
+      <div class="flex items-center justify-between p-4 border-b border-slate-800">
+        <input id="note-title-input" type="text" placeholder="Note Title..."
+               class="text-base font-bold text-white bg-transparent border-none focus:outline-none w-full mr-2 placeholder-slate-600" />
+        <button id="btn-close-note-modal" class="text-slate-400 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Editor Content & Live Preview Split/Tab -->
+      <div class="flex-1 overflow-y-auto p-4 space-y-3">
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-400 mb-1">Tags (comma separated)</label>
+          <input id="note-tags-input" type="text" placeholder="ideas, project, meetings, personal"
+                 class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-100 placeholder-slate-600 focus:ring-1 focus:ring-blue-500 focus:outline-none" />
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 min-h-[220px]">
+          <!-- Markdown Input -->
+          <div class="flex flex-col">
+            <span class="text-[11px] font-semibold text-slate-400 mb-1">Markdown Editor</span>
+            <textarea id="note-content-input" placeholder="# Write your note in markdown...&#10;- Task 1&#10;- [x] Completed item"
+                      class="flex-1 w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs font-mono text-slate-200 placeholder-slate-600 focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none min-h-[200px]"></textarea>
+          </div>
+
+          <!-- Live Preview Pane -->
+          <div class="flex flex-col">
+            <span class="text-[11px] font-semibold text-slate-400 mb-1">Live Preview</span>
+            <div id="note-preview-pane" class="markdown-body flex-1 bg-slate-950/60 border border-slate-800/80 rounded-xl p-3 text-xs text-slate-300 overflow-y-auto min-h-[200px]"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Editor Footer -->
+      <div class="flex items-center justify-between p-3.5 border-t border-slate-800 bg-slate-950/40">
+        <span class="text-[11px] text-slate-500 hidden sm:inline">Supports standard Markdown & checkboxes</span>
+        <div class="flex items-center gap-2 ml-auto">
+          <button type="button" onclick="Notes.closeEditor()" class="px-4 py-1.5 text-xs font-medium rounded-xl text-slate-400 hover:text-slate-200">
+            Cancel
+          </button>
+          <button id="btn-save-note" type="button" class="px-5 py-1.5 text-xs font-semibold rounded-xl bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-600/30 transition">
+            Save Note
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FLOATING TOAST -->
+  <div id="app-toast" class="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+    <div class="bg-blue-600 text-white text-xs font-medium px-4 py-2.5 rounded-full shadow-xl shadow-blue-600/30 flex items-center gap-2 border border-blue-400/40">
+      <i data-lucide="check-circle" class="w-4 h-4 text-white"></i>
+      <span id="toast-message">Action successful</span>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="/js/calendar.js"></script>
+  <script src="/js/notes.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
